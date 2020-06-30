@@ -1,0 +1,101 @@
+---
+
+- hosts: local
+  become: true
+
+  tasks:
+  - name: APT | Add Repo Keys
+    apt_key: url={{ item }} state=present
+    with_items: "{{ apt_key_urls }}"
+
+  - name: APT | Add Repository
+    apt_repository: 
+      repo: "{{ item.url }}"
+      filename: "{{ item.filename }}"
+      state: present
+    with_items: "{{ apt_repo_urls }}"
+
+  - name: APT | Update Cache
+    apt: update_cache=yes cache_valid_time=3600
+
+  - name: APT | Upgrade System
+    apt: name='*' state=latest
+
+  - name: Install Essential Packages
+    apt:
+      - build-essential
+      - git
+      - vim
+      - intel-microcode
+      - gnome-tweaks
+      - p7zip-full
+      - p7zip-rar
+      - google-chrome-stable
+
+  - name: Snap | Install VSCode
+    snap:
+      name: code
+      state: present
+      channel: latest/stable
+      classic: yes
+
+  - name: Snap | Install Node 12.x LTS
+    snap:
+      name: node
+      state: present
+      channel: 12/stable
+      classic: yes
+
+  - name: Snap | Install Android Studio
+    snap:
+      name: android-studio
+      state: present
+      channel: latest/stable 
+      classic: yes
+  
+  - name: Snap | Install Discord
+    snap:
+      name: discord
+      state: present
+      channel: latest/stable
+
+  - name: Snap | Granting Access Discord system-abserve
+    command: snap connect discord:system-observe
+
+  - name: Configure /etc/bash.bashrc
+    blockinfile:
+      path: /etc/bash.bashrc
+      marker: "\n#{mark} - Ansible Managed Block\n"
+      marker_begin: "Begin"
+      marker_end: "End"
+      block: |
+        #GENERAL
+        export EDITOR="vim"
+        export PS1="\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\[\033[01;33m\]\$(__git_ps1)\[\033[00m\] \$ "
+
+        #HISTORY
+        export HISTTIMEFORMAT="%Y-%m-%d %T  "
+        export HISTSIZE=5000
+        export HISTSIZE=5000
+
+        #ALIAS
+        alias ssh='ssh -o ServerAliveInterval=15'
+
+        #MANPAGE THEME
+        export LESS_TERMCAP_mb=$'\e[1;31m'     
+        export LESS_TERMCAP_md=$'\e[1;33m'     
+        export LESS_TERMCAP_so=$'\e[01;44;37m' 
+        export LESS_TERMCAP_us=$'\e[01;37m'    
+        export LESS_TERMCAP_me=$'\e[0m'        
+        export LESS_TERMCAP_se=$'\e[0m'        
+        export LESS_TERMCAP_ue=$'\e[0m'        
+        export GROFF_NO_SGR=1
+
+  vars:
+    apt_key_urls:
+    - https://dl-ssl.google.com/linux/linux_signing_key.pub 
+
+    apt_repo_urls:
+    - url: deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main
+      filename: google
+
