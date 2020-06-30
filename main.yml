@@ -25,6 +25,7 @@
     apt:
       - build-essential
       - git
+      - curl
       - vim
       - intel-microcode
       - gnome-tweaks
